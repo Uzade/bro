@@ -1,4 +1,3 @@
-
 float acc = 1;
 float gravity = 0.5;
 float groundDrag = 0.85;
@@ -8,14 +7,15 @@ boolean onGround = false;
 
 float shootSpeed = 10;
 
-float groundHeight;
+float groundHeight = 800;
 
 PVector pos = new PVector(40, 40);
 PVector vel = new PVector(0, 0);
 
-PVector camPos = new PVector(0,0);
-PVector targetCamPos = new PVector(0,0);
-PVector obsPos = new PVector(400, 400);
+PVector camPos = new PVector(0, 0);
+PVector targetCamPos = new PVector(0, 0);
+float camTransitionTime = 240; // in frames
+long camTransitionStart = 0;
 
 boolean aPressed = false;
 boolean dPressed = false;
@@ -28,78 +28,81 @@ boolean shootingLeft = true;
 
 ArrayList<Knife> knifes = new ArrayList<Knife>();
 
-void render() {
-  background(#761C1C);
-  PVector posScreen = Util.worldToScreen(pos, camPos);
-  rect(posScreen.x, posScreen.y, playerHeight, playerHeight);
-  
-  PVector obsScreen = Util.worldToScreen(obsPos, camPos);
-  rect(obsScreen.x, obsScreen.y, 150, 400);
-  
-  PVector groundPos = Util.worldToScreen(new PVector(0, groundHeight), camPos);
-  line(0, groundPos.y, width, groundPos.y);
-  
-  text("onGround: "+onGround, 10, 20);
-  text("pos: "+pos.x+", "+pos.y, 10, 35);
-  
-  for(int i = 0; i< knifes.size(); i++){
-    knifes.get(i).update(camPos);
-    knifes.get(i).checkCollision(400, 400, 150, 400);
-  }
-}
+ArrayList<Obstacle> obstacles = new ArrayList<Obstacle>();
 
-boolean rectRect(float r1x, float r1y, float r1w, float r1h, float r2x, float r2y, float r2w, float r2h) {
-  return (r1x + r1w >= r2x &&    // r1 right edge past r2 left
-      r1x <= r2x + r2w &&    // r1 left edge past r2 right
-      r1y + r1h >= r2y &&    // r1 top edge past r2 bottom
-      r1y <= r2y + r2h);
-}
-
+long framesElapsed = 0;
 
 void setup () {
   size(1500, 900);
-  groundHeight = height-100;
+  obstacles.add(new Obstacle(400, 400, 150, 400, true));
+  obstacles.add(new Obstacle(500, 300, 75, 500, true));
+  obstacles.add(new Obstacle(-100, 600, 75, 200, false));
+  
 }
 
-void draw() {
+void checkAndSolveCollision(Obstacle obs) {
+  checkAndSolveCollision(obs.pos, obs.w, obs.h);
+}
 
-  onGround = pos.y >= (groundHeight -playerHeight);
-  
-  for(int i = 0; i< knifes.size(); i++){
-    Knife knife = knifes.get(i);
-    
-    if(!knife.collidable) continue;
-    PVector collisionKnife = Util.collide( pos.x, pos.y, playerHeight, playerHeight, knife.pos.x, knife.pos.y, knife.knifeWidth, knife.knifeHeight);
-    if(collisionKnife.y < 0) {
-      onGround = true;
-    } else if(collisionKnife.mag() > 0) {
-      while(collisionKnife.mag() > 0){
-        pos.add(collisionKnife);
-      collisionKnife = Util.collide( pos.x, pos.y, playerHeight, playerHeight, knife.pos.x, knife.pos.y, knife.knifeWidth, knife.knifeHeight);
-    }
-    }
-  }
-  PVector collisionDirection = Util.collide( pos.x, pos.y, playerHeight, playerHeight, 400, 400, 150, 400);
-  if(collisionDirection.y < 0) {
+void checkAndSolveCollision(Knife knife) {
+  checkAndSolveCollision(knife.pos, knife.knifeWidth, knife.knifeHeight);
+}
+
+void checkAndSolveCollision(PVector obsPos, float w, float h) {
+  PVector obsScreenPos = Util.worldToScreen(obsPos, camPos);
+  PVector screenPos = Util.worldToScreen(pos, camPos);
+  PVector collisionDirection = Util.collide(screenPos.x, screenPos.y, playerHeight, playerHeight, obsScreenPos.x, obsScreenPos.y, w, h);
+  if (collisionDirection.y < 0) {
     onGround = true;
-  } else if(collisionDirection.mag() > 0) {
-    while(collisionDirection.mag() > 0){
+  } else if (collisionDirection.mag() > 0) {
+    while (collisionDirection.mag() > 0) {
       pos.add(collisionDirection);
-      collisionDirection = Util.collide( pos.x, pos.y, playerHeight, playerHeight, 400, 400, 150, 400);
+      screenPos = Util.worldToScreen(pos, camPos);
+      collisionDirection = Util.collide(screenPos.x, screenPos.y, playerHeight, playerHeight, obsScreenPos.x, obsScreenPos.y, w, h);
     }
   }
-  
+}
+
+void updateCam() {
+  targetCamPos = pos.copy().sub(width/2, height/3*2);
+  camPos.add(vel);
+  if (shootingLeft) {
+    targetCamPos.x += width/6;
+  } else {
+    targetCamPos.x -= width/6;
+  }
+  float t = (framesElapsed-camTransitionStart) / camTransitionTime;
+  t = constrain(t, 0, 1);
+  // smoothstep
+  float smooth = t * t * (3 - 2 * t);
+  // smootherstep
+  // float smooth = t * t * t * (t * (6*t - 15) + 10);
+  camPos.add(targetCamPos.copy().sub(camPos).mult(smooth));
+}
+
+void physicsStuff() {
+  onGround = pos.y >= (groundHeight -playerHeight);
+
+  for (int i = 0; i< knifes.size(); i++) {
+    Knife knife = knifes.get(i);
+
+    if (!knife.collidable) continue;
+    checkAndSolveCollision(knife);
+  }
+  for(int i = 0; i < obstacles.size(); i++) {
+    checkAndSolveCollision(obstacles.get(i));
+  }
+
   if (!onGround) {
     vel.y += gravity;
   } else {
     vel.y = 0;
-    
   }
 
   vel.x *= groundDrag;
-  if(vel.x > 0) {
-   shootingLeft =true; 
-  } else if( vel.x <0) {
+  if (vel.x > 0) {
+    shootingLeft =true;
+  } else if ( vel.x <0) {
     shootingLeft = false;
   }
 
@@ -112,33 +115,60 @@ void draw() {
   if (spacePressed && onGround) {
     vel.y -= jumpForce;
   }
- 
 
   pos.add(vel);
+}
 
-  targetCamPos = pos.copy().sub(width/2, height/3*2);
-  camPos.add(vel);
-  if(shootingLeft) {
-   targetCamPos.x += width/6; 
-  } else {
-   targetCamPos.x -= width/6; 
+void render() {
+  background(#761C1C);
+  PVector posScreen = Util.worldToScreen(pos, camPos);
+  fill(#FFFFFF);
+  rect(posScreen.x, posScreen.y, playerHeight, playerHeight);
+
+  for (int i = 0; i< obstacles.size(); i++) {
+    obstacles.get(i).draw(camPos);
   }
-  print(camPos);
-  print(targetCamPos);
-  println(targetCamPos.copy().sub(camPos));
-  camPos.add(targetCamPos.copy().sub(camPos).mult(0.03));
+  fill(#FFFFFF);
+  PVector groundPos = Util.worldToScreen(new PVector(0, groundHeight), camPos);
+  line(0, groundPos.y, width, groundPos.y);
+
+  text("onGround: "+onGround, 10, 20);
+  text("pos: "+pos.x+", "+pos.y, 10, 35);
+  text("vel: "+vel.x+", "+vel.y, 10, 50);
+  text("frameRate: "+frameRate, 10, 65);
+
+  for (int i = 0; i< knifes.size(); i++) {
+    knifes.get(i).update(camPos, framesElapsed);
+    for (int j = 0; j < obstacles.size(); j++) {
+      knifes.get(i).checkCollision(obstacles.get(j), framesElapsed);
+    }
+  }
+  stroke(#000000);
+  
+  // draw world origin
+  fill(#00FF00);
+  PVector worldOrigin = Util.worldToScreen(new PVector(0, 0), camPos);
+  circle(worldOrigin.x, worldOrigin.y, 5);
+}
+
+void draw() {
+  physicsStuff();
+  updateCam();
   render();
+  framesElapsed++;
 }
 
 void keyPressed() {
-  if (key == 'a') {
+  if (key == 'a' && !aPressed) {
     aPressed = true;
-  } else if (key == 'd') {
+    camTransitionStart = framesElapsed;
+  } else if (key == 'd' && !dPressed) {
     dPressed = true;
+    camTransitionStart = framesElapsed;
   } else if (key == ' ') {
     spacePressed = true;
-  } else if(key == 'w' && !shootPressed) {
-    if(knifes.size() > 1 ){
+  } else if (key == 'w' && !shootPressed) {
+    if (knifes.size() > 1 ) {
       knifes.remove(0);
     }
     PVector knifePos = pos.copy();
@@ -156,7 +186,7 @@ void keyReleased() {
     dPressed = false;
   } else if (key == ' ') {
     spacePressed = false;
-  } else if(key == 'w') {
+  } else if (key == 'w') {
     shootPressed = false;
   }
 }
