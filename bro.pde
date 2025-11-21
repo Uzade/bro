@@ -19,6 +19,11 @@ long camTransitionStart = 0;
 
 boolean aPressed = false;
 boolean dPressed = false;
+boolean wPressed = false;
+boolean sPressed = false;
+boolean qPressed = false;
+boolean ePressed = false;
+boolean tPressed = false;
 boolean shootPressed = false;
 boolean spacePressed = false;
 
@@ -31,6 +36,10 @@ ArrayList<Knife> knifes = new ArrayList<Knife>();
 ArrayList<Obstacle> obstacles = new ArrayList<Obstacle>();
 
 long framesElapsed = 0;
+
+boolean editorMode = false;
+float camSpeed = 15;
+float camZoom = 1;
 
 void setup () {
   size(1500, 900);
@@ -77,7 +86,7 @@ void updateCam() {
   float smooth = t * t * (3 - 2 * t);
   // smootherstep
   // float smooth = t * t * t * (t * (6*t - 15) + 10);
-  camPos.add(targetCamPos.copy().sub(camPos).mult(smooth));
+  if(!editorMode) camPos.add(targetCamPos.copy().sub(camPos).mult(smooth));
 }
 
 void physicsStuff() {
@@ -107,16 +116,49 @@ void physicsStuff() {
   }
 
   if (aPressed) {
-    vel.x -= acc;
+    if(editorMode) {
+      camPos.x -= camSpeed;
+    } else {
+      vel.x -= acc;
+    }
   }
   if (dPressed) {
-    vel.x += acc;
+    if(editorMode) {
+      camPos.x += camSpeed;
+    } else {
+      vel.x += acc;
+    }
   }
   if (spacePressed && onGround) {
-    vel.y -= jumpForce;
+    if(!editorMode) vel.y -= jumpForce;
   }
-
+  
+  if(editorMode) {
+    if(wPressed) {
+      camPos.y -= camSpeed;
+    }
+    if(sPressed) {
+      camPos.y += camSpeed;
+    }
+    if(qPressed) {
+      camZoom -= 0.1;
+    }
+    if(ePressed) {
+      camZoom += 0.1;
+    }
+  }
   pos.add(vel);
+}
+
+void throwKnife() {
+  if (knifes.size() > 1 ) {
+    knifes.remove(0);
+  }
+  PVector knifePos = pos.copy();
+  knifePos.y += playerHeight/2;
+  knifePos.x += playerHeight/2;
+  knifes.add(new Knife(knifePos, shootingLeft? shootSpeed:-1*shootSpeed));
+  shootPressed = true;
 }
 
 void render() {
@@ -136,6 +178,7 @@ void render() {
   text("pos: "+pos.x+", "+pos.y, 10, 35);
   text("vel: "+vel.x+", "+vel.y, 10, 50);
   text("frameRate: "+frameRate, 10, 65);
+  text("editorMode: "+editorMode, 10, 80);
 
   for (int i = 0; i< knifes.size(); i++) {
     knifes.get(i).update(camPos, framesElapsed);
@@ -167,16 +210,21 @@ void keyPressed() {
     camTransitionStart = framesElapsed;
   } else if (key == ' ') {
     spacePressed = true;
-  } else if (key == 'w' && !shootPressed) {
-    if (knifes.size() > 1 ) {
-      knifes.remove(0);
-    }
-    PVector knifePos = pos.copy();
-    knifePos.y += playerHeight/2;
-    knifePos.x += playerHeight/2;
-    knifes.add(new Knife(knifePos, shootingLeft? shootSpeed:-1*shootSpeed));
-    shootPressed = true;
+  } else if (!editorMode && key == 'w' && !shootPressed) {
+    throwKnife();
+  } else if (key == 'w') {
+    wPressed = true;
+  } else if (key == 's') {
+    sPressed = true;
+  } else if (key == 'q') {
+    qPressed = true;
+  } else if (key == 'e') {
+    ePressed = true;
+  } else if (key == 't' && !tPressed) {
+    tPressed = true;
+    editorMode = !editorMode;
   }
+  
 }
 
 void keyReleased() {
@@ -186,7 +234,17 @@ void keyReleased() {
     dPressed = false;
   } else if (key == ' ') {
     spacePressed = false;
-  } else if (key == 'w') {
+  } else if (!editorMode && key == 'w') {
     shootPressed = false;
+  } else if (key == 'w') {
+    wPressed = false;
+  } else if (key == 's') {
+    sPressed = false;
+  } else if (key == 'q') {
+    qPressed = false;
+  } else if (key == 'e') {
+    ePressed = false;
+  } else if (key == 't') {
+    tPressed = false;
   }
 }
