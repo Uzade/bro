@@ -31,45 +31,17 @@ float playerHeight = 80;
 
 boolean shootingLeft = true;
 
-ArrayList<Knife> knifes = new ArrayList<Knife>();
-
-ArrayList<Obstacle> obstacles = new ArrayList<Obstacle>();
-
 long framesElapsed = 0;
 
 boolean editorMode = false;
 float camSpeed = 15;
 float camZoom = 1;
 
+Level1 level1 = new Level1();
+
 void setup () {
   size(1500, 900);
-  obstacles.add(new Obstacle(400, 400, 150, 400, true));
-  obstacles.add(new Obstacle(500, 300, 75, 500, true));
-  obstacles.add(new Obstacle(-100, 600, 75, 200, false));
   
-}
-
-void checkAndSolveCollision(Obstacle obs) {
-  checkAndSolveCollision(obs.pos, obs.w, obs.h);
-}
-
-void checkAndSolveCollision(Knife knife) {
-  checkAndSolveCollision(knife.pos, knife.knifeWidth, knife.knifeHeight);
-}
-
-void checkAndSolveCollision(PVector obsPos, float w, float h) {
-  PVector obsScreenPos = Util.worldToScreen(obsPos, camPos);
-  PVector screenPos = Util.worldToScreen(pos, camPos);
-  PVector collisionDirection = Util.collide(screenPos.x, screenPos.y, playerHeight, playerHeight, obsScreenPos.x, obsScreenPos.y, w, h);
-  if (collisionDirection.y < 0) {
-    onGround = true;
-  } else if (collisionDirection.mag() > 0) {
-    while (collisionDirection.mag() > 0) {
-      pos.add(collisionDirection);
-      screenPos = Util.worldToScreen(pos, camPos);
-      collisionDirection = Util.collide(screenPos.x, screenPos.y, playerHeight, playerHeight, obsScreenPos.x, obsScreenPos.y, w, h);
-    }
-  }
 }
 
 void updateCam() {
@@ -90,17 +62,7 @@ void updateCam() {
 }
 
 void physicsStuff() {
-  onGround = pos.y >= (groundHeight -playerHeight);
-
-  for (int i = 0; i< knifes.size(); i++) {
-    Knife knife = knifes.get(i);
-
-    if (!knife.collidable) continue;
-    checkAndSolveCollision(knife);
-  }
-  for(int i = 0; i < obstacles.size(); i++) {
-    checkAndSolveCollision(obstacles.get(i));
-  }
+  onGround = level1.checkAndSolveCollisions(pos, playerHeight, playerHeight, vel);
 
   if (!onGround) {
     vel.y += gravity;
@@ -150,26 +112,12 @@ void physicsStuff() {
   pos.add(vel);
 }
 
-void throwKnife() {
-  if (knifes.size() > 1 ) {
-    knifes.remove(0);
-  }
-  PVector knifePos = pos.copy();
-  knifePos.y += playerHeight/2;
-  knifePos.x += playerHeight/2;
-  knifes.add(new Knife(knifePos, shootingLeft? shootSpeed:-1*shootSpeed));
-  shootPressed = true;
-}
-
 void render() {
   background(#761C1C);
   PVector posScreen = Util.worldToScreen(pos, camPos);
   fill(#FFFFFF);
   rect(posScreen.x, posScreen.y, playerHeight, playerHeight);
-
-  for (int i = 0; i< obstacles.size(); i++) {
-    obstacles.get(i).draw(camPos);
-  }
+  level1.drawLevel(camPos, framesElapsed, editorMode);
   fill(#FFFFFF);
   PVector groundPos = Util.worldToScreen(new PVector(0, groundHeight), camPos);
   line(0, groundPos.y, width, groundPos.y);
@@ -179,14 +127,6 @@ void render() {
   text("vel: "+vel.x+", "+vel.y, 10, 50);
   text("frameRate: "+frameRate, 10, 65);
   text("editorMode: "+editorMode, 10, 80);
-
-  for (int i = 0; i< knifes.size(); i++) {
-    knifes.get(i).update(camPos, framesElapsed);
-    for (int j = 0; j < obstacles.size(); j++) {
-      knifes.get(i).checkCollision(obstacles.get(j), framesElapsed);
-    }
-  }
-  stroke(#000000);
   
   // draw world origin
   fill(#00FF00);
@@ -211,7 +151,7 @@ void keyPressed() {
   } else if (key == ' ') {
     spacePressed = true;
   } else if (!editorMode && key == 'w' && !shootPressed) {
-    throwKnife();
+    level1.throwKnife(pos, shootingLeft? shootSpeed:-1*shootSpeed);
   } else if (key == 'w') {
     wPressed = true;
   } else if (key == 's') {
@@ -247,4 +187,8 @@ void keyReleased() {
   } else if (key == 't') {
     tPressed = false;
   }
+}
+
+void mouseReleased() {
+  level1.obstacles.forEach(obs -> obs.releaseAllPoints());
 }

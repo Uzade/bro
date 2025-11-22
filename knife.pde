@@ -16,8 +16,8 @@ class Knife {
     this.speed = new PVector(speed, 0);
   }
   
-  void update(PVector camPos, long framesElapsed) {
-    pos.add(speed);
+  void render(PVector camPos, long framesElapsed) {
+    pos.add(speed); //TODO move out
     PVector screenPos = Util.worldToScreen(pos, camPos);
     if(dying){
       float t = (framesElapsed-dyingAnnimationStart) / dyingAnnimationDuration;
