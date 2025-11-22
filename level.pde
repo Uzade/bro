@@ -1,26 +1,85 @@
 class Level1 {
+  
+  float editorWidth = 300;
+  float editorHeight = 200;
+  float defaultWidth = 100;
+  float defaultHeight = 200;
 
   ArrayList<Obstacle> obstacles = new ArrayList<Obstacle>();
   ArrayList<Knife> knifes = new ArrayList<Knife>();
+  
+  // Editor
+  PVector pCreateObs;
+  int draggingNewObsIdx = -1;
+  PVector pGenerateCode;
+  boolean pressingGenerate = false;
 
   Level1() {
     obstacles.add(new Obstacle(400, 400, 150, 400, true));
     obstacles.add(new Obstacle(500, 300, 75, 500, true));
     obstacles.add(new Obstacle(-100, 600, 75, 200, false));
+    
   }
 
   void drawLevel(PVector camPos, long framesElapsed, boolean editorMode) {
     for (int i = 0; i< obstacles.size(); i++) {
       obstacles.get(i).render(camPos);
-      if(editorMode){
-        obstacles.get(i).drawDebugPoints(camPos);
-        if (mousePressed) obstacles.get(i).checkDebugpointCollision(new PVector(mouseX, mouseY), camPos, obstacles);
-      }
     }
     for (int i = 0; i< knifes.size(); i++) {
       knifes.get(i).render(camPos, framesElapsed);
     }
     stroke(#000000);
+    
+    if(editorMode) {
+      drawEditor(camPos);
+    }
+  }
+  
+  void drawEditor(PVector camPos) {
+    for (int i = 0; i< obstacles.size(); i++) {
+      obstacles.get(i).drawDebugPoints(camPos);
+      if (mousePressed) obstacles.get(i).checkDebugpointCollision(new PVector(mouseX, mouseY), camPos, obstacles);
+    }
+    fill(#DDDDDD);
+    noStroke();
+    rect(width-editorWidth, 0, editorWidth, editorHeight);
+    stroke(#000000);
+    fill(#000000);
+    textSize(20);
+    text("Editor-Mode:", width-editorWidth+30, 30);
+    textSize(14);
+    
+    pCreateObs = new PVector(width-editorWidth+40, 60);
+    pGenerateCode = new PVector(width-editorWidth+40, editorHeight-20);
+    text("new Obstacle", pCreateObs.x+20, pCreateObs.y+4);
+    text("generate Code", pGenerateCode.x+20, pGenerateCode.y+4);
+    fill(#00FF00);
+    circle(pCreateObs.x, pCreateObs.y, Util.debugPointSize);
+    circle(pGenerateCode.x, pGenerateCode.y, Util.debugPointSize);
+    
+    if(draggingNewObsIdx != -1 ) {
+      PVector mouseCoordWorld = Util.screenToWorld(new PVector(mouseX, mouseY), camPos);
+      obstacles.get(draggingNewObsIdx).pos = mouseCoordWorld;
+    }
+    
+    if(mousePressed && draggingNewObsIdx == -1 && Util.withinRadiusOf(new PVector(mouseX, mouseY), pCreateObs, Util.debugPointSize)) {
+      draggingNewObsIdx = obstacles.size();
+      obstacles.add(new Obstacle(mouseX, mouseY, defaultWidth, defaultHeight, true));
+    }
+    
+    if(mousePressed && !pressingGenerate && Util.withinRadiusOf(new PVector(mouseX, mouseY), pGenerateCode, Util.debugPointSize)) {
+      generateLevelCode();
+      pressingGenerate = true;
+    }
+  }
+  
+  void generateLevelCode() {
+    println("\n ====== Level Dump ======");
+    for (int i = 0; i< obstacles.size(); i++) {
+      Obstacle obs = obstacles.get(i);
+      println("    obstacles.add(new Obstacle("+obs.pos.x+", "+obs.pos.y+", "+obs.w+", "+obs.h+", "+obs.knifeable+"));");
+    }
+    println("");
   }
 
   boolean checkAndSolveCollisions(PVector playerPos, float playerW, float playerH, PVector playerVel) {

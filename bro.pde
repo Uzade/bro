@@ -122,6 +122,7 @@ void render() {
   PVector groundPos = Util.worldToScreen(new PVector(0, groundHeight), camPos);
   line(0, groundPos.y, width, groundPos.y);
 
+  textSize(14);
   text("onGround: "+onGround, 10, 20);
   text("pos: "+pos.x+", "+pos.y, 10, 35);
   text("vel: "+vel.x+", "+vel.y, 10, 50);
@@ -191,4 +192,6 @@ void keyReleased() {
 
 void mouseReleased() {
   level1.obstacles.forEach(obs -> obs.releaseAllPoints());
+  level1.draggingNewObsIdx = -1;
+  level1.pressingGenerate = false;
 }
