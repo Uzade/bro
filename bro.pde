@@ -1,58 +1,35 @@
-float acc = 1;
-float gravity = 0.5;
-float groundDrag = 0.85;
-float jumpForce = 14;
-
 boolean onGround = false;
-
-float shootSpeed = 10;
-
-float groundHeight = 800;
 
 PVector pos = new PVector(40, 40);
 PVector vel = new PVector(0, 0);
-
-boolean aPressed = false;
-boolean dPressed = false;
-boolean wPressed = false;
-boolean sPressed = false;
-boolean qPressed = false;
-boolean ePressed = false;
-boolean tPressed = false;
-boolean shootPressed = false;
-boolean spacePressed = false;
-
-float playerHeight = 80;
 
 boolean shootingLeft = true;
 
 long framesElapsed = 0;
 
 boolean editorMode = false;
-float camSpeed = 15;
-float camZoom = 1;
 
 KeyboardMgr kbdMgr = new KeyboardMgr();
 Camera cam = new Camera(kbdMgr);
-Level level = new Level(cam);
+Level level = new Level(cam, kbdMgr);
 
 void setup () {
   size(1500, 900);
-  kbdMgr.doOnKeyDownStroke('h', () -> println("You pressed 'H'"));
+  kbdMgr.doOnKeyDownStroke('t', () -> editorMode = !editorMode);
 }
 
 
 
 void physicsStuff() {
-  onGround = level.checkAndSolveCollisions(pos, playerHeight, playerHeight, vel);
+  onGround = level.checkAndSolveCollisions(pos, Config.playerHeight, Config.playerHeight, vel);
 
   if (!onGround) {
-    vel.y += gravity;
+    vel.y += Config.gravity;
   } else {
     vel.y = 0;
   }
 
-  vel.x *= groundDrag;
+  vel.x *= Config.groundDrag;
   if (vel.x > 0) {
     shootingLeft =true;
   } else if ( vel.x <0) {
@@ -60,15 +37,15 @@ void physicsStuff() {
   }
 
   if (!editorMode) { // move player
-    if (aPressed) {
-      vel.x -= acc;
+    if (kbdMgr.isKeyPressed('a')) {
+      vel.x -= Config.acc;
     }
 
-    if (dPressed) {
-      vel.x += acc;
+    if (kbdMgr.isKeyPressed('d')) {
+      vel.x += Config.acc;
     }
-    if (spacePressed && onGround) {
-      vel.y -= jumpForce;
+    if (kbdMgr.isKeyPressed(' ') && onGround) {
+      vel.y -= Config.jumpForce;
     }
   }
 
@@ -79,10 +56,10 @@ void render() {
   background(#761C1C);
   PVector posScreen = cam.worldToScreen(pos);
   fill(#FFFFFF);
-  rect(posScreen.x, posScreen.y, playerHeight, playerHeight);
+  rect(posScreen.x, posScreen.y, Config.playerHeight, Config.playerHeight);
   level.drawLevel(framesElapsed, editorMode);
   fill(#FFFFFF);
-  PVector groundPos = cam.worldToScreen(new PVector(0, groundHeight));
+  PVector groundPos = cam.worldToScreen(new PVector(0, Config.groundHeight));
   line(0, groundPos.y, width, groundPos.y);
 
   textSize(14);
@@ -107,51 +84,10 @@ void draw() {
 
 void keyPressed() {
   kbdMgr.onKeyPressed();
-  if (key == 'a' && !aPressed) {
-    aPressed = true;
-    
-  } else if (key == 'd' && !dPressed) {
-    dPressed = true;
-    camTransitionStart = framesElapsed;
-  } else if (key == ' ') {
-    spacePressed = true;
-  } else if (!editorMode && key == 'w' && !shootPressed) {
-    level.throwKnife(pos, shootingLeft? shootSpeed:-1*shootSpeed);
-  } else if (key == 'w') {
-    wPressed = true;
-  } else if (key == 's') {
-    sPressed = true;
-  } else if (key == 'q') {
-    qPressed = true;
-  } else if (key == 'e') {
-    ePressed = true;
-  } else if (key == 't' && !tPressed) {
-    tPressed = true;
-    editorMode = !editorMode;
-  }
 }
 
 void keyReleased() {
   kbdMgr.onKeyReleased();
-  if (key == 'a') {
-    aPressed = false;
-  } else if (key == 'd') {
-    dPressed = false;
-  } else if (key == ' ') {
-    spacePressed = false;
-  } else if (!editorMode && key == 'w') {
-    shootPressed = false;
-  } else if (key == 'w') {
-    wPressed = false;
-  } else if (key == 's') {
-    sPressed = false;
-  } else if (key == 'q') {
-    qPressed = false;
-  } else if (key == 'e') {
-    ePressed = false;
-  } else if (key == 't') {
-    tPressed = false;
-  }
 }
 
 void mouseReleased() {

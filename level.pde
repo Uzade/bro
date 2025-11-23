@@ -1,6 +1,9 @@
 class Level {
   
   Camera cam;
+  //PVector playerPos = new PVector(40, 40);
+  
+  float shootSpeed = 10;
   
   float editorWidth = 300;
   float editorHeight = 200;
@@ -16,9 +19,11 @@ class Level {
   PVector pGenerateCode;
   boolean pressingGenerate = false;
 
-  Level(Camera cam) {
+  Level(Camera cam, KeyboardMgr kbdMgr) {
     this.cam = cam;
     transitionToLevel1();
+    kbdMgr.doOnKeyDownStroke('w', () -> { if(!editorMode) level.throwKnife(pos, shootingLeft? shootSpeed:-1*shootSpeed); });
+    
   }
   
   void transitionToLevel1() {
@@ -91,7 +96,7 @@ class Level {
   }
 
   boolean checkAndSolveCollisions(PVector playerPos, float playerW, float playerH, PVector playerVel) {
-    onGround = pos.y >= (groundHeight -playerHeight);
+    onGround = pos.y >= (Config.groundHeight -Config.playerHeight);
 
     for (int i = 0; i< knifes.size(); i++) {
       Knife knife = knifes.get(i);
@@ -115,10 +120,9 @@ class Level {
       knifes.remove(0);
     }
     PVector knifePos = playerPos.copy();
-    knifePos.y += playerHeight/2;
-    knifePos.x += playerHeight/2;
+    knifePos.y += Config.playerHeight/2;
+    knifePos.x += Config.playerHeight/2;
     knifes.add(new Knife(knifePos, shootSpeed));
-    shootPressed = true;
   }
   
   void onMouseRelease() {

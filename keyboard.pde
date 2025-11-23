@@ -5,8 +5,10 @@ class KeyboardMgr {
   void onKeyPressed() {
     if (key == CODED) return;
     
-    if (!isKeyPressed(key)) { // transition is in this frame
-      var callbacks = keyDownCallbacks.get(""+key);
+    char keyUncased = (""+key).toLowerCase().charAt(0);
+    
+    if (!isKeyPressed(keyUncased)) { // transition is in this frame
+      var callbacks = keyDownCallbacks.get(""+keyUncased);
       if (callbacks != null) {
         for (Runnable callback : callbacks) {
           callback.run();
@@ -14,12 +16,12 @@ class KeyboardMgr {
       }
     }
     
-    keysPressed.put("" + key, true);
+    keysPressed.put("" + keyUncased, true);
   }
 
   void onKeyReleased() {
     if (key != CODED) {
-      keysPressed.put("" + key, false);
+      keysPressed.put((""+key).toLowerCase(), false);
     }
   }
 

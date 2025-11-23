@@ -3,6 +3,7 @@ class Camera {
   PVector targetCamPos = new PVector(0, 0);
   float camTransitionTime = 240; // in frames
   long camTransitionStart = 0;
+  float camSpeed = 15;
   KeyboardMgr kbdMgr;
 
   Camera(KeyboardMgr kbdMgr) {
