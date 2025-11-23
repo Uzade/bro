@@ -20,14 +20,6 @@ static class Util {
     return(collision);
   }
 
-  static PVector worldToScreen(PVector wordCoord, PVector camPos) {
-    return wordCoord.copy().sub(camPos);
-  }
-  
-  static PVector screenToWorld(PVector screenCoord, PVector camPos) {
-    return screenCoord.copy().add(camPos);
-  }
-
   static boolean checkAndSolveCollision(Obstacle obs, PVector playerPos, float playerW, float playerH, PVector playerVel) {
     return checkAndSolveCollision(obs.pos, obs.w, obs.h, playerPos, playerW, playerH, playerVel);
   }

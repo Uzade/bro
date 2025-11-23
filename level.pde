@@ -1,4 +1,6 @@
-class Level1 {
+class Level {
+  
+  Camera cam;
   
   float editorWidth = 300;
   float editorHeight = 200;
@@ -14,31 +16,37 @@ class Level1 {
   PVector pGenerateCode;
   boolean pressingGenerate = false;
 
-  Level1() {
+  Level(Camera cam) {
+    this.cam = cam;
+    transitionToLevel1();
+  }
+  
+  void transitionToLevel1() {
+    obstacles.clear();
+    
     obstacles.add(new Obstacle(400, 400, 150, 400, true));
     obstacles.add(new Obstacle(500, 300, 75, 500, true));
     obstacles.add(new Obstacle(-100, 600, 75, 200, false));
-    
   }
 
-  void drawLevel(PVector camPos, long framesElapsed, boolean editorMode) {
+  void drawLevel(long framesElapsed, boolean editorMode) {
     for (int i = 0; i< obstacles.size(); i++) {
-      obstacles.get(i).render(camPos);
+      obstacles.get(i).render(cam);
     }
     for (int i = 0; i< knifes.size(); i++) {
-      knifes.get(i).render(camPos, framesElapsed);
+      knifes.get(i).render(cam, framesElapsed);
     }
     stroke(#000000);
     
     if(editorMode) {
-      drawEditor(camPos);
+      drawEditor();
     }
   }
   
-  void drawEditor(PVector camPos) {
+  void drawEditor() {
     for (int i = 0; i< obstacles.size(); i++) {
-      obstacles.get(i).drawDebugPoints(camPos);
-      if (mousePressed) obstacles.get(i).checkDebugpointCollision(new PVector(mouseX, mouseY), camPos, obstacles);
+      obstacles.get(i).drawDebugPoints(cam);
+      if (mousePressed) obstacles.get(i).checkDebugpointCollision(new PVector(mouseX, mouseY), cam, obstacles);
     }
     fill(#DDDDDD);
     noStroke();
@@ -58,7 +66,7 @@ class Level1 {
     circle(pGenerateCode.x, pGenerateCode.y, Util.debugPointSize);
     
     if(draggingNewObsIdx != -1 ) {
-      PVector mouseCoordWorld = Util.screenToWorld(new PVector(mouseX, mouseY), camPos);
+      PVector mouseCoordWorld = cam.screenToWorld(new PVector(mouseX, mouseY));
       obstacles.get(draggingNewObsIdx).pos = mouseCoordWorld;
     }
     
@@ -111,5 +119,11 @@ class Level1 {
     knifePos.x += playerHeight/2;
     knifes.add(new Knife(knifePos, shootSpeed));
     shootPressed = true;
+  }
+  
+  void onMouseRelease() {
+    obstacles.forEach(obs -> obs.releaseAllPoints());
+    draggingNewObsIdx = -1;
+    pressingGenerate = false;
   }
 }

@@ -26,8 +26,8 @@ class Obstacle {
    this.knifeable = knifeable;
   }
   
-  void render(PVector camPos) {
-    PVector screenPos = Util.worldToScreen(pos, camPos);
+  void render(Camera cam) {
+    PVector screenPos = cam.worldToScreen(pos);
     if(!knifeable){
       fill(#EDB959);
     } else {
@@ -36,13 +36,13 @@ class Obstacle {
     rect(screenPos.x, screenPos.y, w, h);
   }
   
-  void drawDebugPoints(PVector camPos) {
-    pLeft = Util.worldToScreen(pos.copy().add(0,h/2), camPos);
-    pRight = Util.worldToScreen(pos.copy().add(w,h/2), camPos);
-    pTop = Util.worldToScreen(pos.copy().add(w/2,0), camPos);
-    pBottom = Util.worldToScreen(pos.copy().add(w/2,h), camPos);
-    pKnifeable = Util.worldToScreen(pos.copy().add(w/2,h/2).add(Util.debugPointSize,0), camPos);
-    pDelete = Util.worldToScreen(pos.copy().add(w/2,h/2).add(-Util.debugPointSize,0), camPos);
+  void drawDebugPoints(Camera cam) {
+    pLeft = cam.worldToScreen(pos.copy().add(0,h/2));
+    pRight = cam.worldToScreen(pos.copy().add(w,h/2));
+    pTop = cam.worldToScreen(pos.copy().add(w/2,0));
+    pBottom = cam.worldToScreen(pos.copy().add(w/2,h));
+    pKnifeable = cam.worldToScreen(pos.copy().add(w/2,h/2).add(Util.debugPointSize,0));
+    pDelete = cam.worldToScreen(pos.copy().add(w/2,h/2).add(-Util.debugPointSize,0));
     
     fill(#FF00FF);
     circle(pLeft.x, pLeft.y, Util.debugPointSize);
@@ -55,18 +55,18 @@ class Obstacle {
     circle(pKnifeable.x, pKnifeable.y, Util.debugPointSize);
   }
   
-  void checkDebugpointCollision(PVector mousePos, PVector camPos, ArrayList<Obstacle> obss) {
+  void checkDebugpointCollision(PVector mousePos, Camera cam, ArrayList<Obstacle> obss) {
     if(draggingLeft) {
-      pos.x = Util.screenToWorld(mousePos, camPos).x;
+      pos.x = cam.screenToWorld(mousePos).x;
     }
     if(draggingTop) {
-      pos.y = Util.screenToWorld(mousePos, camPos).y;
+      pos.y = cam.screenToWorld(mousePos).y;
     }
     if(draggingRight) {
-      w = Util.screenToWorld(mousePos, camPos).x - pos.x;
+      w = cam.screenToWorld(mousePos).x - pos.x;
     }
     if(draggingBottom) {
-      h = Util.screenToWorld(mousePos, camPos).y - pos.y;
+      h = cam.screenToWorld(mousePos).y - pos.y;
     }
     
     if(Util.withinRadiusOf(mousePos, pLeft, Util.debugPointSize)) {

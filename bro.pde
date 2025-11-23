@@ -12,11 +12,6 @@ float groundHeight = 800;
 PVector pos = new PVector(40, 40);
 PVector vel = new PVector(0, 0);
 
-PVector camPos = new PVector(0, 0);
-PVector targetCamPos = new PVector(0, 0);
-float camTransitionTime = 240; // in frames
-long camTransitionStart = 0;
-
 boolean aPressed = false;
 boolean dPressed = false;
 boolean wPressed = false;
@@ -37,32 +32,19 @@ boolean editorMode = false;
 float camSpeed = 15;
 float camZoom = 1;
 
-Level1 level1 = new Level1();
+KeyboardMgr kbdMgr = new KeyboardMgr();
+Camera cam = new Camera(kbdMgr);
+Level level = new Level(cam);
 
 void setup () {
   size(1500, 900);
-  
+  kbdMgr.doOnKeyDownStroke('h', () -> println("You pressed 'H'"));
 }
 
-void updateCam() {
-  targetCamPos = pos.copy().sub(width/2, height/3*2);
-  camPos.add(vel);
-  if (shootingLeft) {
-    targetCamPos.x += width/6;
-  } else {
-    targetCamPos.x -= width/6;
-  }
-  float t = (framesElapsed-camTransitionStart) / camTransitionTime;
-  t = constrain(t, 0, 1);
-  // smoothstep
-  float smooth = t * t * (3 - 2 * t);
-  // smootherstep
-  // float smooth = t * t * t * (t * (6*t - 15) + 10);
-  if(!editorMode) camPos.add(targetCamPos.copy().sub(camPos).mult(smooth));
-}
+
 
 void physicsStuff() {
-  onGround = level1.checkAndSolveCollisions(pos, playerHeight, playerHeight, vel);
+  onGround = level.checkAndSolveCollisions(pos, playerHeight, playerHeight, vel);
 
   if (!onGround) {
     vel.y += gravity;
@@ -77,49 +59,30 @@ void physicsStuff() {
     shootingLeft = false;
   }
 
-  if (aPressed) {
-    if(editorMode) {
-      camPos.x -= camSpeed;
-    } else {
+  if (!editorMode) { // move player
+    if (aPressed) {
       vel.x -= acc;
     }
-  }
-  if (dPressed) {
-    if(editorMode) {
-      camPos.x += camSpeed;
-    } else {
+
+    if (dPressed) {
       vel.x += acc;
     }
-  }
-  if (spacePressed && onGround) {
-    if(!editorMode) vel.y -= jumpForce;
-  }
-  
-  if(editorMode) {
-    if(wPressed) {
-      camPos.y -= camSpeed;
-    }
-    if(sPressed) {
-      camPos.y += camSpeed;
-    }
-    if(qPressed) {
-      camZoom -= 0.1;
-    }
-    if(ePressed) {
-      camZoom += 0.1;
+    if (spacePressed && onGround) {
+      vel.y -= jumpForce;
     }
   }
+
   pos.add(vel);
 }
 
 void render() {
   background(#761C1C);
-  PVector posScreen = Util.worldToScreen(pos, camPos);
+  PVector posScreen = cam.worldToScreen(pos);
   fill(#FFFFFF);
   rect(posScreen.x, posScreen.y, playerHeight, playerHeight);
-  level1.drawLevel(camPos, framesElapsed, editorMode);
+  level.drawLevel(framesElapsed, editorMode);
   fill(#FFFFFF);
-  PVector groundPos = Util.worldToScreen(new PVector(0, groundHeight), camPos);
+  PVector groundPos = cam.worldToScreen(new PVector(0, groundHeight));
   line(0, groundPos.y, width, groundPos.y);
 
   textSize(14);
@@ -128,31 +91,32 @@ void render() {
   text("vel: "+vel.x+", "+vel.y, 10, 50);
   text("frameRate: "+frameRate, 10, 65);
   text("editorMode: "+editorMode, 10, 80);
-  
+
   // draw world origin
   fill(#00FF00);
-  PVector worldOrigin = Util.worldToScreen(new PVector(0, 0), camPos);
+  PVector worldOrigin = cam.worldToScreen(new PVector(0, 0));
   circle(worldOrigin.x, worldOrigin.y, 5);
 }
 
 void draw() {
   physicsStuff();
-  updateCam();
+  cam.update(pos, vel, editorMode, framesElapsed);
   render();
   framesElapsed++;
 }
 
 void keyPressed() {
+  kbdMgr.onKeyPressed();
   if (key == 'a' && !aPressed) {
     aPressed = true;
-    camTransitionStart = framesElapsed;
+    
   } else if (key == 'd' && !dPressed) {
     dPressed = true;
     camTransitionStart = framesElapsed;
   } else if (key == ' ') {
     spacePressed = true;
   } else if (!editorMode && key == 'w' && !shootPressed) {
-    level1.throwKnife(pos, shootingLeft? shootSpeed:-1*shootSpeed);
+    level.throwKnife(pos, shootingLeft? shootSpeed:-1*shootSpeed);
   } else if (key == 'w') {
     wPressed = true;
   } else if (key == 's') {
@@ -165,10 +129,10 @@ void keyPressed() {
     tPressed = true;
     editorMode = !editorMode;
   }
-  
 }
 
 void keyReleased() {
+  kbdMgr.onKeyReleased();
   if (key == 'a') {
     aPressed = false;
   } else if (key == 'd') {
@@ -191,7 +155,6 @@ void keyReleased() {
 }
 
 void mouseReleased() {
-  level1.obstacles.forEach(obs -> obs.releaseAllPoints());
-  level1.draggingNewObsIdx = -1;
-  level1.pressingGenerate = false;
+  level.onMouseRelease();
+  //kbdMgr.debugPressedKeys();
 }
