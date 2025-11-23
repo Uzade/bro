@@ -13,12 +13,19 @@ KeyboardMgr kbdMgr = new KeyboardMgr();
 Camera cam = new Camera(kbdMgr);
 Level level = new Level(cam, kbdMgr);
 
+PImage[] walkAnimation = new PImage[4];
+PGraphics playerGC;
+
 void setup () {
   size(1500, 900);
+  playerGC = createGraphics(int(Config.playerHeight), int(Config.playerHeight));
+  
   kbdMgr.doOnKeyDownStroke('t', () -> editorMode = !editorMode);
+  walkAnimation[0] = loadImage("animations/walk1.png");
+  walkAnimation[1] = loadImage("animations/walk2.png");
+  walkAnimation[2] = loadImage("animations/walk3.png");
+  walkAnimation[3] = loadImage("animations/walk4.png");
 }
-
-
 
 void physicsStuff() {
   onGround = level.checkAndSolveCollisions(pos, Config.playerHeight, Config.playerHeight, vel);
@@ -52,12 +59,31 @@ void physicsStuff() {
   pos.add(vel);
 }
 
-void render() {
-  background(#761C1C);
+void drawPlayer() {
   PVector posScreen = cam.worldToScreen(pos);
-  fill(#FFFFFF);
-  rect(posScreen.x, posScreen.y, Config.playerHeight, Config.playerHeight);
+  
+  int imageIdx;
+  if(abs(vel.x) > 1) {
+    imageIdx = (int)(framesElapsed / Config.animationSpeed) % 4;
+  } else {
+    imageIdx = 0;
+  }
+  playerGC.beginDraw();
+  playerGC.clear();
+  if(!shootingLeft) {
+    playerGC.translate(Config.playerHeight, 0);
+    playerGC.scale(-1, 1);
+  }
+  playerGC.image(walkAnimation[imageIdx], 0, 0, Config.playerHeight, Config.playerHeight);
+  playerGC.endDraw();
+  
+  image(playerGC, posScreen.x, posScreen.y, Config.playerHeight, Config.playerHeight);
+}
+
+void render() {
+  background(#D14848);
   level.drawLevel(framesElapsed, editorMode);
+  drawPlayer();
   fill(#FFFFFF);
   PVector groundPos = cam.worldToScreen(new PVector(0, Config.groundHeight));
   line(0, groundPos.y, width, groundPos.y);

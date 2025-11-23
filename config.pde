@@ -6,4 +6,5 @@ class Config {
   static final float playerHeight = 80;
   static final float shootSpeed = 10;
   static final float groundHeight = 800;
+  static final int animationSpeed = 5; // higher is slower
 }
