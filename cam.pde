@@ -1,7 +1,6 @@
 class Camera {
   PVector camPos = new PVector(0, 0);
   PVector targetCamPos = new PVector(0, 0);
-  float camTransitionTime = 240; // in frames
   long camTransitionStart = 0;
   float camSpeed = 15;
   KeyboardMgr kbdMgr;
@@ -21,7 +20,7 @@ class Camera {
     } else {
       targetCamPos.x -= width/6;
     }
-    float t = (framesElapsed-camTransitionStart) / camTransitionTime;
+    float t = (framesElapsed-camTransitionStart) / Config.camTransitionTime;
     t = constrain(t, 0, 1);
     // smoothstep
     float smooth = t * t * (3 - 2 * t);

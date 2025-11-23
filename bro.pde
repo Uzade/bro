@@ -13,18 +13,25 @@ KeyboardMgr kbdMgr = new KeyboardMgr();
 Camera cam = new Camera(kbdMgr);
 Level level = new Level(cam, kbdMgr);
 
+long jumpAnimationStartFrame = 0;
 PImage[] walkAnimation = new PImage[4];
+PImage[] jumpAnimation = new PImage[4];
 PGraphics playerGC;
 
 void setup () {
   size(1500, 900);
   playerGC = createGraphics(int(Config.playerHeight), int(Config.playerHeight));
-  
+
   kbdMgr.doOnKeyDownStroke('t', () -> editorMode = !editorMode);
   walkAnimation[0] = loadImage("animations/walk1.png");
   walkAnimation[1] = loadImage("animations/walk2.png");
   walkAnimation[2] = loadImage("animations/walk3.png");
   walkAnimation[3] = loadImage("animations/walk4.png");
+  
+  jumpAnimation[0] = loadImage("animations/jump1.png");
+  jumpAnimation[1] = loadImage("animations/jump2.png");
+  jumpAnimation[2] = loadImage("animations/jump3.png");
+  jumpAnimation[3] = loadImage("animations/jump4.png");
 }
 
 void physicsStuff() {
@@ -53,6 +60,7 @@ void physicsStuff() {
     }
     if (kbdMgr.isKeyPressed(' ') && onGround) {
       vel.y -= Config.jumpForce;
+      jumpAnimationStartFrame = framesElapsed;
     }
   }
 
@@ -61,22 +69,29 @@ void physicsStuff() {
 
 void drawPlayer() {
   PVector posScreen = cam.worldToScreen(pos);
-  
-  int imageIdx;
-  if(abs(vel.x) > 1) {
-    imageIdx = (int)(framesElapsed / Config.animationSpeed) % 4;
-  } else {
-    imageIdx = 0;
-  }
+
   playerGC.beginDraw();
   playerGC.clear();
-  if(!shootingLeft) {
+  if (!shootingLeft) {
     playerGC.translate(Config.playerHeight, 0);
     playerGC.scale(-1, 1);
   }
-  playerGC.image(walkAnimation[imageIdx], 0, 0, Config.playerHeight, Config.playerHeight);
+
+  if (onGround) { // walking / standing
+    int imageIdx;
+    if (abs(vel.x) > 1) {
+      imageIdx = (int)(framesElapsed / Config.walkAnimationSpeed) % walkAnimation.length;
+    } else {
+      imageIdx = 0;
+    }
+    playerGC.image(walkAnimation[imageIdx], 0, 0, Config.playerHeight, Config.playerHeight);
+  } else { // jumping
+    float t = (framesElapsed-jumpAnimationStartFrame)*1.0 / Config.jumpAnimationDuration;
+    t = constrain(t, 0, 0.99);
+    int imageIdx = int(t * jumpAnimation.length);
+    playerGC.image(jumpAnimation[imageIdx], 0, 0, Config.playerHeight, Config.playerHeight);
+  }
   playerGC.endDraw();
-  
   image(playerGC, posScreen.x, posScreen.y, Config.playerHeight, Config.playerHeight);
 }
 
@@ -118,5 +133,4 @@ void keyReleased() {
 
 void mouseReleased() {
   level.onMouseRelease();
-  //kbdMgr.debugPressedKeys();
 }
