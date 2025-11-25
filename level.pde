@@ -71,6 +71,8 @@ class Level {
     circle(pCreateObs.x, pCreateObs.y, Util.debugPointSize);
     circle(pGenerateCode.x, pGenerateCode.y, Util.debugPointSize);
     
+    circle(spawnPoint.x, spawnPoint.y, Util.debugPointSize);
+
     if(draggingNewObsIdx != -1 ) {
       PVector mouseCoordWorld = cam.screenToWorld(new PVector(mouseX, mouseY));
       obstacles.get(draggingNewObsIdx).pos = mouseCoordWorld;
@@ -88,12 +90,11 @@ class Level {
   }
   
   void generateLevelCode() {
-    println("\n ====== Level Dump ======");
     for (int i = 0; i< obstacles.size(); i++) {
       Obstacle obs = obstacles.get(i);
-      println("    obstacles.add(new Obstacle("+obs.pos.x+", "+obs.pos.y+", "+obs.w+", "+obs.h+", "+obs.knifeable+"));");
+      levelSaveThing.println("    obstacles.add(new Obstacle("+obs.pos.x+", "+obs.pos.y+", "+obs.w+", "+obs.h+", "+obs.knifeable+"));");
     }
-    println("");
+    levelSaveThing.flush();
   }
 
   boolean checkAndSolveCollisions(PVector playerPos, float playerW, float playerH, PVector playerVel) {

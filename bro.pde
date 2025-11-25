@@ -1,3 +1,5 @@
+PrintWriter levelSaveThing = createWriter("leveloutput/level1.txt");
+
 boolean onGround = false;
 
 PVector pos = new PVector(40, 40);
