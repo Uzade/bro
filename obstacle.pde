@@ -6,16 +6,12 @@ class Obstacle {
   float h;
   boolean knifeable;
   
-  PVector pLeft;
-  PVector pRight;
-  PVector pTop;
-  PVector pBottom;
+  PVector pTopLeft;
+  PVector pBottomRight;
   PVector pKnifeable;
   PVector pDelete;
-  boolean draggingLeft = false;
-  boolean draggingTop = false;
-  boolean draggingRight = false;
-  boolean draggingBottom = false;
+  boolean draggingTopLeft = false;
+  boolean draggingBottomRight = false;
   boolean clickingDelete = false;
   boolean clickingKnifeable = false;
   
@@ -37,18 +33,15 @@ class Obstacle {
   }
   
   void drawDebugPoints(Camera cam) {
-    pLeft = cam.worldToScreen(pos.copy().add(0,h/2));
-    pRight = cam.worldToScreen(pos.copy().add(w,h/2));
-    pTop = cam.worldToScreen(pos.copy().add(w/2,0));
-    pBottom = cam.worldToScreen(pos.copy().add(w/2,h));
+    pTopLeft = cam.worldToScreen(pos.copy());
+    pBottomRight = cam.worldToScreen(pos.copy().add(w,h));
+
     pKnifeable = cam.worldToScreen(pos.copy().add(w/2,h/2).add(Util.debugPointSize,0));
     pDelete = cam.worldToScreen(pos.copy().add(w/2,h/2).add(-Util.debugPointSize,0));
     
     fill(#FF00FF);
-    circle(pLeft.x, pLeft.y, Util.debugPointSize);
-    circle(pRight.x, pRight.y, Util.debugPointSize);
-    circle(pTop.x, pTop.y, Util.debugPointSize);
-    circle(pBottom.x, pBottom.y, Util.debugPointSize);
+    circle(pTopLeft.x, pTopLeft.y, Util.debugPointSize);
+    circle(pBottomRight.x, pBottomRight.y, Util.debugPointSize);
     fill(#FF0000);
     circle(pDelete.x, pDelete.y, Util.debugPointSize);
     fill(#FF8800);
@@ -56,46 +49,33 @@ class Obstacle {
   }
   
   void checkDebugpointCollision(PVector mousePos, Camera cam, ArrayList<Obstacle> obss) {
-    if(draggingLeft) {
-      pos.x = cam.screenToWorld(mousePos).x;
+    if(draggingTopLeft) {
+      pos = cam.screenToWorld(mousePos);
     }
-    if(draggingTop) {
-      pos.y = cam.screenToWorld(mousePos).y;
-    }
-    if(draggingRight) {
+    if(draggingBottomRight) {
       w = cam.screenToWorld(mousePos).x - pos.x;
-    }
-    if(draggingBottom) {
       h = cam.screenToWorld(mousePos).y - pos.y;
     }
     
-    if(Util.withinRadiusOf(mousePos, pLeft, Util.debugPointSize)) {
-      draggingLeft = true;
+    if(Util.withinRadiusOf(mousePos, pTopLeft, Util.debugPointSize)) {
+      draggingTopLeft = true;
     }
-    if(Util.withinRadiusOf(mousePos, pTop, Util.debugPointSize)) {
-      draggingTop = true;
+    if(Util.withinRadiusOf(mousePos, pBottomRight, Util.debugPointSize)) {
+      draggingBottomRight = true;
     }
-    if(Util.withinRadiusOf(mousePos, pRight, Util.debugPointSize)) {
-      draggingRight = true;
-    }
-    if(Util.withinRadiusOf(mousePos, pBottom, Util.debugPointSize)) {
-      draggingBottom = true;
-    }
-    if(Util.withinRadiusOf(mousePos, pDelete, Util.debugPointSize) && !clickingDelete) {
+    if(Util.withinRadiusOf(mousePos, pDelete, Util.debugPointSize) && !clickingDelete && !draggingTopLeft && !draggingBottomRight) {
       clickingDelete = true;
       obss.remove(this);
     }
-    if(Util.withinRadiusOf(mousePos, pKnifeable, Util.debugPointSize) && !clickingKnifeable) {
+    if(Util.withinRadiusOf(mousePos, pKnifeable, Util.debugPointSize) && !clickingKnifeable && !draggingTopLeft && !draggingBottomRight) {
       clickingKnifeable = true;
       knifeable = !knifeable;
     }
   }
   
   void releaseAllPoints() {
-    draggingLeft = false;
-    draggingTop = false;
-    draggingRight = false;
-    draggingBottom = false;
+    draggingTopLeft = false;
+    draggingBottomRight = false;
     clickingDelete = false;
     clickingKnifeable = false;
   }

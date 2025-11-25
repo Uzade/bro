@@ -1,5 +1,6 @@
 class Level {
   
+  PVector spawnPoint = new PVector(40, 40); // this doesn't really do anything in the game, It's just for showing it in the editor
   Camera cam;
   //PVector playerPos = new PVector(40, 40);
   
