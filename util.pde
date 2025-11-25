@@ -1,5 +1,4 @@
 static class Util {
-  static final float debugPointSize = 15;
   
   static PVector collide(float r1x, float r1y, float r1w, float r1h, float r2x, float r2y, float r2w, float r2h) {
     float dx=(r1x+r1w/2)-(r2x+r2w/2);

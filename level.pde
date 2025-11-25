@@ -1,6 +1,7 @@
 class Level {
   
   PVector spawnPoint = new PVector(40, 40); // this doesn't really do anything in the game, It's just for showing it in the editor
+  PVector levelTransition = new PVector(10000, 0);
   Camera cam;
   //PVector playerPos = new PVector(40, 40);
   
@@ -17,6 +18,10 @@ class Level {
   // Editor
   PVector pCreateObs;
   int draggingNewObsIdx = -1;
+  PVector pCreateSpawnPoint;
+  boolean draggingSpawnPoint;
+  PVector pLevelTrans;
+  boolean draggingLevelTrans;
   PVector pGenerateCode;
   boolean pressingGenerate = false;
 
@@ -33,6 +38,11 @@ class Level {
     obstacles.add(new Obstacle(400, 400, 150, 400, true));
     obstacles.add(new Obstacle(500, 300, 75, 500, true));
     obstacles.add(new Obstacle(-100, 600, 75, 200, false));
+  }
+
+  void transitionToLevel2() {
+    obstacles.clear();
+    
   }
 
   void drawLevel(long framesElapsed, boolean editorMode) {
@@ -54,6 +64,24 @@ class Level {
       obstacles.get(i).drawDebugPoints(cam);
       if (mousePressed) obstacles.get(i).checkDebugpointCollision(new PVector(mouseX, mouseY), cam, obstacles);
     }
+    // drawSpawnPoint
+    PVector spawPointScreen = cam.worldToScreen(spawnPoint);
+    fill(255, 0, 255, 100);
+    circle(spawPointScreen.x, spawPointScreen.y, Config.hugeDebugPointSize);
+    fill(#FF00FF);
+    circle(spawPointScreen.x, spawPointScreen.y, Config.debugPointSize);
+    fill(#FFFFFF);
+    text("Spaw", spawPointScreen.x, spawPointScreen.y);
+
+    // drawLevelTransition
+    PVector levelTransScreen = cam.worldToScreen(levelTransition);
+    fill(255, 0, 255, 100);
+    circle(levelTransScreen.x, levelTransScreen.y, Config.hugeDebugPointSize);
+    fill(#FF00FF);
+    circle(levelTransScreen.x, levelTransScreen.y, Config.debugPointSize);
+    fill(#FFFFFF);
+    text("Next Level", levelTransScreen.x, levelTransScreen.y);
+
     fill(#DDDDDD);
     noStroke();
     rect(width-editorWidth, 0, editorWidth, editorHeight);
@@ -64,26 +92,46 @@ class Level {
     textSize(14);
     
     pCreateObs = new PVector(width-editorWidth+40, 60);
+    pCreateSpawnPoint = new PVector(width-editorWidth+40, 90);
+    pLevelTrans = new PVector(width-editorWidth+40, 120);
     pGenerateCode = new PVector(width-editorWidth+40, editorHeight-20);
     text("new Obstacle", pCreateObs.x+20, pCreateObs.y+4);
+    text("new Spawn Point", pCreateSpawnPoint.x+20, pCreateSpawnPoint.y+4);
+    text("new Level transition", pLevelTrans.x+20, pLevelTrans.y+4);
     text("generate Code", pGenerateCode.x+20, pGenerateCode.y+4);
     fill(#00FF00);
-    circle(pCreateObs.x, pCreateObs.y, Util.debugPointSize);
-    circle(pGenerateCode.x, pGenerateCode.y, Util.debugPointSize);
-    
-    circle(spawnPoint.x, spawnPoint.y, Util.debugPointSize);
+    circle(pCreateObs.x, pCreateObs.y, Config.debugPointSize);
+    circle(pCreateSpawnPoint.x, pCreateSpawnPoint.y, Config.debugPointSize);
+    circle(pLevelTrans.x, pLevelTrans.y, Config.debugPointSize);
+    circle(pGenerateCode.x, pGenerateCode.y, Config.debugPointSize);
 
     if(draggingNewObsIdx != -1 ) {
       PVector mouseCoordWorld = cam.screenToWorld(new PVector(mouseX, mouseY));
       obstacles.get(draggingNewObsIdx).pos = mouseCoordWorld;
     }
+
+    if(draggingSpawnPoint) {
+      spawnPoint = cam.screenToWorld(new PVector(mouseX, mouseY));
+    }
+
+    if(draggingLevelTrans) {
+      levelTransition = cam.screenToWorld(new PVector(mouseX, mouseY));
+    }
     
-    if(mousePressed && draggingNewObsIdx == -1 && Util.withinRadiusOf(new PVector(mouseX, mouseY), pCreateObs, Util.debugPointSize)) {
+    if(mousePressed && draggingNewObsIdx == -1 && Util.withinRadiusOf(new PVector(mouseX, mouseY), pCreateObs, Config.debugPointSize)) {
       draggingNewObsIdx = obstacles.size();
       obstacles.add(new Obstacle(mouseX, mouseY, defaultWidth, defaultHeight, true));
     }
+
+    if(mousePressed && !draggingSpawnPoint && Util.withinRadiusOf(new PVector(mouseX, mouseY), pCreateSpawnPoint, Config.debugPointSize)) {
+      draggingSpawnPoint = true;
+    }
+
+    if(mousePressed && !draggingLevelTrans && Util.withinRadiusOf(new PVector(mouseX, mouseY), pLevelTrans, Config.debugPointSize)) {
+      draggingLevelTrans = true;
+    }
     
-    if(mousePressed && !pressingGenerate && Util.withinRadiusOf(new PVector(mouseX, mouseY), pGenerateCode, Util.debugPointSize)) {
+    if(mousePressed && !pressingGenerate && Util.withinRadiusOf(new PVector(mouseX, mouseY), pGenerateCode, Config.debugPointSize)) {
       generateLevelCode();
       pressingGenerate = true;
     }
@@ -98,6 +146,12 @@ class Level {
   }
 
   boolean checkAndSolveCollisions(PVector playerPos, float playerW, float playerH, PVector playerVel) {
+
+    // check for level transition
+    if(Util.withinRadiusOf(playerPos, levelTransition, Config.hugeDebugPointSize)) {
+      transitionToLevel2();
+    }
+
     onGround = pos.y >= (Config.groundHeight -Config.playerHeight);
 
     for (int i = 0; i< knifes.size(); i++) {
@@ -131,5 +185,7 @@ class Level {
     obstacles.forEach(obs -> obs.releaseAllPoints());
     draggingNewObsIdx = -1;
     pressingGenerate = false;
+    draggingSpawnPoint = false;
+    draggingLevelTrans = false;
   }
 }

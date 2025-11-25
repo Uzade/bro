@@ -36,16 +36,16 @@ class Obstacle {
     pTopLeft = cam.worldToScreen(pos.copy());
     pBottomRight = cam.worldToScreen(pos.copy().add(w,h));
 
-    pKnifeable = cam.worldToScreen(pos.copy().add(w/2,h/2).add(Util.debugPointSize,0));
-    pDelete = cam.worldToScreen(pos.copy().add(w/2,h/2).add(-Util.debugPointSize,0));
+    pKnifeable = cam.worldToScreen(pos.copy().add(w/2,h/2).add(Config.debugPointSize,0));
+    pDelete = cam.worldToScreen(pos.copy().add(w/2,h/2).add(-Config.debugPointSize,0));
     
     fill(#FF00FF);
-    circle(pTopLeft.x, pTopLeft.y, Util.debugPointSize);
-    circle(pBottomRight.x, pBottomRight.y, Util.debugPointSize);
+    circle(pTopLeft.x, pTopLeft.y, Config.debugPointSize);
+    circle(pBottomRight.x, pBottomRight.y, Config.debugPointSize);
     fill(#FF0000);
-    circle(pDelete.x, pDelete.y, Util.debugPointSize);
+    circle(pDelete.x, pDelete.y, Config.debugPointSize);
     fill(#FF8800);
-    circle(pKnifeable.x, pKnifeable.y, Util.debugPointSize);
+    circle(pKnifeable.x, pKnifeable.y, Config.debugPointSize);
   }
   
   void checkDebugpointCollision(PVector mousePos, Camera cam, ArrayList<Obstacle> obss) {
@@ -57,17 +57,17 @@ class Obstacle {
       h = cam.screenToWorld(mousePos).y - pos.y;
     }
     
-    if(Util.withinRadiusOf(mousePos, pTopLeft, Util.debugPointSize)) {
+    if(Util.withinRadiusOf(mousePos, pTopLeft, Config.debugPointSize)) {
       draggingTopLeft = true;
     }
-    if(Util.withinRadiusOf(mousePos, pBottomRight, Util.debugPointSize)) {
+    if(Util.withinRadiusOf(mousePos, pBottomRight, Config.debugPointSize)) {
       draggingBottomRight = true;
     }
-    if(Util.withinRadiusOf(mousePos, pDelete, Util.debugPointSize) && !clickingDelete && !draggingTopLeft && !draggingBottomRight) {
+    if(Util.withinRadiusOf(mousePos, pDelete, Config.debugPointSize) && !clickingDelete && !draggingTopLeft && !draggingBottomRight) {
       clickingDelete = true;
       obss.remove(this);
     }
-    if(Util.withinRadiusOf(mousePos, pKnifeable, Util.debugPointSize) && !clickingKnifeable && !draggingTopLeft && !draggingBottomRight) {
+    if(Util.withinRadiusOf(mousePos, pKnifeable, Config.debugPointSize) && !clickingKnifeable && !draggingTopLeft && !draggingBottomRight) {
       clickingKnifeable = true;
       knifeable = !knifeable;
     }

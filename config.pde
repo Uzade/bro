@@ -9,4 +9,6 @@ class Config {
   static final int walkAnimationSpeed = 5; // frames/image (higher is slower)
   static final int jumpAnimationDuration = 30; // frames
   static final float camTransitionTime = 240; // in frames
+  static final float debugPointSize = 15; // in pixels
+  static final float hugeDebugPointSize = 100; // in pixels
 }
